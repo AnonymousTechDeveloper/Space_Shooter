@@ -36,7 +36,7 @@ try:
             },
             "Game": {
                 "Player_Ship_Image": "Images\\Player_Space_Ship(1).png",
-                "Enemy_Ship_Image": "Images\\Enemy_Space_Ship(3).png",
+                "Enemy_Ship_Image": "Images\\Enemy_Space_Ship(1).png",
                 "Boss_Ship_Image": "Images\\Boss_Space_Ship(1).png",
                 "Star_Appearence": "Stars with Movement",
                 "Background_Colour": "#000014"
@@ -44,7 +44,9 @@ try:
         },
     "Game_Functionings":
         {
-            "Player_Ship_Speed": 4
+            "Player_Ship_Speed": 4,
+            "SFX": True,
+            "Music": True
         }
     }
     
@@ -207,6 +209,14 @@ def Open_Settings():
     Player_Speed_Label.place(x = 54, y = 690)
     Player_Speed_Box = ttk.Combobox(Setting_Frame, values = ("Low", "Medium (Recommanded)", "High"), state = "readonly", font = ("Times New Roman", 12, "italic"))
     Player_Speed_Box.place(x = 270, y = 687)
+    SFX_Label = Label(Setting_Frame, text = "SFX:", foreground = "#FFFFFF", background = "#000014", font = ("Times New Roman", 18))
+    SFX_Label.place(x = 54, y = 720)
+    SFX_Box = ttk.Combobox(Setting_Frame, values = ("On", "Off"), state = "readonly", font = ("Times New Roman", 12, "italic"))
+    SFX_Box.place(x = 270, y = 717)
+    Music_Label = Label(Setting_Frame, text = "Music:", foreground = "#FFFFFF", background = "#000014", font = ("Times New Roman", 18))
+    Music_Label.place(x = 54, y = 750)
+    Music_Box = ttk.Combobox(Setting_Frame, values = ("On", "Off"), state = "readonly", font = ("Times New Roman", 12, "italic"))
+    Music_Box.place(x = 270, y = 747)
     
     # A function to return background or current value for widgets wose value is present in the Configurations variable (or the JSON file)
     # For example, if Player_Space_Ship(3).png is defined as the Player skin in the JSON file, it will return 'RED' colour for it
@@ -292,6 +302,14 @@ def Open_Settings():
                 Settings_Config["Appearence"]["Game"]["Background_Colour"] = "#000000"
         else:
             Settings_Config["Appearence"]["Game"]["Background_Colour"] = "#000014"
+        if SFX_Box.get() == "On":
+            Settings_Config["Game_Functionings"]["SFX"] = True
+        else:
+            Settings_Config["Game_Functionings"]["SFX"] = False
+        if Music_Box.get() == "On":
+            Settings_Config["Game_Functionings"]["Music"] = True
+        else:
+            Settings_Config["Game_Functionings"]["Music"] = False
         # Overwriting global Configurations variable
         Configurations = Settings_Config
         # Converting Python statements (Dict) to JSON statements (String)
@@ -334,7 +352,9 @@ def Open_Settings():
             },
         "Game_Functionings":
             {
-                "Player_Ship_Speed": 4
+                "Player_Ship_Speed": 4,
+                "SFX": True,
+                "Music": True
             }
         }
         # Converting Python Statements (Dict) to JSON Statemets (String) and overwriting the default settings
@@ -364,18 +384,20 @@ def Open_Settings():
         Game_Win_Bg_Box.current(Show_Curen_Config("Combobox", Configurations["Appearence"]["Game"]["Background_Colour"]))
         Player_Speed_Box.current(Show_Curen_Config("Combobox", Configurations["Game_Functionings"]["Player_Ship_Speed"]))
         Change_Obj_Col_Box.current(Show_Curen_Config("Combobox", Configurations["Appearence"]["Start"]["Change_Object_Colours"]))
+        SFX_Box.current(Show_Curen_Config("Combobox", Configurations["Game_Functionings"]["SFX"]))
+        Music_Box.current(Show_Curen_Config("Combobox", Configurations["Game_Functionings"]["Music"]))
         
     Show_Configs()
     
     # Creating a Frame and a Button for saving files
     Save_Frame = Frame(Setting_Frame, highlightthickness = 9, highlightbackground = "Cyan", highlightcolor = "Cyan")
-    Save_Frame.place(x = 180, y = 738)
+    Save_Frame.place(x = 612, y = 270)
     Save_Button = Button(Save_Frame, text = "Save", borderwidth = 0, font = ("Times New Roman", 18, "bold"), foreground = "Cyan", background = "#000014", command = Save_Configures, width = 6)
     Save_Button.pack()
     
     # Creating a Frame and a Button to restore defaults
     Res_Def_Frame = Frame(Setting_Frame, highlightthickness = 9, highlightbackground = "Cyan", highlightcolor = "Cyan")
-    Res_Def_Frame.place(x = 360, y = 738)
+    Res_Def_Frame.place(x = 576, y = 360)
     Res_Def_Button = Button(Res_Def_Frame, text = "Restore Defaults", borderwidth = 0, font = ("Times New Roman", 18, "bold"), foreground = "Cyan", background = "#000014", command = Set_Defaults, width = 12)
     Res_Def_Button.pack()
     
@@ -474,6 +496,7 @@ Update_Note_Information = [
     "   ->Added Settings Window: For Personalisation.",
     "   ->Introducing New Player & Enemy Skins.",
     "   ->Enabled WSAD controls.",
+    "   ->Added Sounds Effects and Background Music.",
     "\n",
     "More Updates with new features coming soon, Stay Tuned!"
 ]
@@ -563,8 +586,16 @@ Window.bind("<F3>", lambda event: Show_Info("Game Controls", Game_Controls_Infor
 Window.bind("<F4>", lambda event: Show_Info("How to Play", Play_Information))
 Window.bind("<F5>", lambda event: Show_Info("Update Notes", Update_Note_Information))
 
+pygame.mixer.init()
+
+if Configurations["Game_Functionings"]["Music"]:
+    pygame.mixer.music.load('Music\\Militant.mp3')
+    pygame.mixer.music.play(-1)
+
 # Putting the start screen in a mainloop
 Window.mainloop()
+
+pygame.mixer.music.stop()
 
 # If the user clicks the exit button, terminate the program before creating the pygame screen
 if Game_Quit == True:
@@ -708,6 +739,10 @@ def Fire_Missile_Player():
     # Reducing available missiles by 1
     Missiles_Available -= 1
     
+    if Configurations["Game_Functionings"]["SFX"]:
+        Fire_Sound = pygame.mixer.Sound("Music\\Fire1.wav")
+        Fire_Sound.play()
+        
     x1 = Player_Ship.left
     
     # Creating new missile rectangle
@@ -763,7 +798,11 @@ def Collision_Occurs_Enemy_Missiles(Missile):
                 # Removing Enemy and its speed from list
                 Enemy_Speed.pop(Enemies.index(Enemy))
                 Enemies.pop(Enemies.index(Enemy))
-
+                
+                if Configurations["Game_Functionings"]["SFX"]:
+                    Explosion_Sound = pygame.mixer.Sound("Music\\Explosion1.wav")
+                    Explosion_Sound.play()
+                    
                 # Recreating 0, 1 or 2 (chosen as random) enemies
                 Create_Enemies(numpy.random.randint(0, 3))
                 
@@ -810,6 +849,10 @@ def Enemy_Fire_Missile():
     
     Enemy_Missiles.append(Missile)
     
+    if Configurations["Game_Functionings"]["SFX"]:
+        Fire_Sound = pygame.mixer.Sound("Music\\Fire1.wav")
+        Fire_Sound.play()
+        
     # Recalling the function after a second if game is STILL RUNNING
     if Game_Running == True:
         Enemy_Fire = Timer(1, Enemy_Fire_Missile)
@@ -868,7 +911,7 @@ def Collision_Occurs_Player_Missiles(Missile):
             
             # Remove the missile from list
             Enemy_Missiles.pop(Enemy_Missiles.index(Missile))
-
+            
             # Return True
             return True
         
@@ -954,6 +997,10 @@ def Continous_Firing():
     Window.blit(Enemy_Missile_Image, Boss_Missile)
     
     Enemy_Missiles.append(Boss_Missile)
+    
+    if Configurations["Game_Functionings"]["SFX"]:
+        Fire_Sound = pygame.mixer.Sound("Music\\Fire1.wav")
+        Fire_Sound.play()
 
 # Function to show boss' hitpoints as a rectangular bar over it
 def Show_Boss_Hitpoints(Boss_Ship):
@@ -992,6 +1039,10 @@ def Player_Missile_Boss_Collision(Missile):
                     # Adding 100 to the score
                     Score += 100
                     
+                    if Configurations["Game_Functionings"]["SFX"]:
+                        Explosion_Sound = pygame.mixer.Sound("Music\\Explosion2.wav")
+                        Explosion_Sound.play()
+                        
                     # Removing every element from the 'Target_Rings' list
                     for Target_Ring in Target_Rings:
                         Target_Rings.pop(Target_Rings.index(Target_Ring))
@@ -1016,6 +1067,11 @@ def Player_Missile_Boss_Collision(Missile):
                     Boss_Coming = Timer(30, Create_Boss_Ship)
                     Boss_Coming.start()
                 
+                else:
+                    if Configurations["Game_Functionings"]["SFX"]:
+                        Explosion_Sound = pygame.mixer.Sound("Music\\Explosion1.wav")
+                        Explosion_Sound.play()
+                
                 # Returing True
                 return True
             
@@ -1024,6 +1080,7 @@ def Player_Missile_Boss_Collision(Missile):
 
 # Function to shoot boss laser till the bottom edge of the screen
 def Start_Boss_Laser():
+    global Game_Running
     
     for Boss_Ship in Boss_Ships:
         
@@ -1032,6 +1089,10 @@ def Start_Boss_Laser():
         Laser = pygame.draw.line(Window, "CYAN", (Bx1 + 135, By2 - 15), (Bx1 + 135, 750))
         Lasers.append(Laser)
         
+        if Game_Running and Configurations["Game_Functionings"]["SFX"]:
+            Laser_Sound = pygame.mixer.Sound("Music\\LaserZap.mp3") 
+            Laser_Sound.play()
+            
         # If the boss exists, start the timers to shoot laser again
         if Game_Running == True:
             Remove_Laser_Timer = Timer(3, Remove_Boss_Laser)
@@ -1058,6 +1119,7 @@ def Move_Lasers(Laser):
         Lx1, Ly1, Lx2, Ly2 = Laser.left, Laser.top, Laser.right, Laser.bottom
         Px1, Py1, Px2, Py2 = Player_Ship.left, Player_Ship.top, Player_Ship.right, Player_Ship.bottom
         
+        # Checking if the Boss Laser Collides with the Player ship
         if Lx1 >= Px1 and Lx1 <= Px2 or Lx2 >= Px1 and Lx2 <= Px2:
             # If true, quit the game
             
@@ -1100,6 +1162,8 @@ def Show_Laser_Target():
 # Shoot boss laser to the target ring
 def Shoot_Boss_Laser():
     
+    global Game_Running
+    
     for Boss_Ship in Boss_Ships:
     
         Bx1, By1, Bx2, By2 = Boss_Ship.left, Boss_Ship.top, Boss_Ship.right, Boss_Ship.bottom
@@ -1116,6 +1180,10 @@ def Shoot_Boss_Laser():
             
             else:
                 Laser_Direction.append("Right")
+            
+            if Game_Running and Configurations["Game_Functionings"]["SFX"]:
+                Laser_Shot_Sound = pygame.mixer.Sound("Music\\LaserShot.mp3")
+                Laser_Shot_Sound.play()
             
             # Check collision after 0.3 seconds
             Check_Collision_Timer = Timer(0.3, lambda: Check_Laser_Shoot(Target_Ring))
@@ -1217,6 +1285,10 @@ Enemy_Fire.start()
 Boss_Coming = Timer(30, Create_Boss_Ship)
 Boss_Coming.start()
 
+if Configurations["Game_Functionings"]["Music"]:
+    pygame.mixer.music.load("Music\\Mission.mp3")
+    pygame.mixer.music.play(-1)
+
 # Running main game loop
 while Game_Running == True:
     
@@ -1234,10 +1306,19 @@ while Game_Running == True:
             Enemy_Fire.cancel()
             try:
                 Fire_Boss_Timer.cancel()
+                
+            except: pass
+            
+            try:
                 Show_Target_Timer.cancel()
+                
+            except: pass
+            
+            try:
                 Boss_Laser_Timer.cancel()
-            except:
-                pass
+            
+            except: pass
+            
             sys.exit()
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
@@ -1338,6 +1419,10 @@ while Game_Running == True:
     # Updating game window
     pygame.display.flip()
 
+if Configurations["Game_Functionings"]["SFX"]:
+    Explosion_Sound = pygame.mixer.Sound("Music\\Explosion2.wav")
+    Explosion_Sound.play()
+
 # Cancel all the timers when the game ends
 Add_Missile.cancel()
 Boss_Coming.cancel()
@@ -1367,6 +1452,11 @@ try:
 except: pass
 
 Window.fill(Configurations["Appearence"]["Game"]["Background_Colour"])
+
+if Configurations["Game_Functionings"]["Music"]:
+    pygame.mixer.music.stop()
+    pygame.mixer.music.load('Music\\Wartime.mp3')
+    pygame.mixer.music.play(-1)
 
 # Running another loop to show that the game ended
 while Game_Quit == False:
