@@ -34,4 +34,4 @@ This version contains:
 >
 >1 Python File.
 >
->1 Application (.exe) file.
+>1 Application (.exe) file. {Removed for now for further inspection}
